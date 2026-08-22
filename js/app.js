@@ -7,7 +7,16 @@ import { emptyPersist, loadPersist, savePersist } from "./store.js";
 import { initBrain, embedCanvas } from "./brain.js";
 
 const s = strings[DEFAULT_LOCALE];
-const MISSION_LABELS = ["cat", "house"];
+/* "other" e' la valvola di sfogo: senza una categoria per "nessuno dei due"
+   il modello e' costretto a scegliere fra gatto e casa anche davanti a un
+   tavolo, ed e' esattamente il difetto che l'app dovrebbe insegnare a vedere.
+   Non concorre alle soglie di addestramento: e' facoltativa. */
+const MISSION_LABELS = ["cat", "house", "other"];
+const TRAIN_LABELS = ["cat", "house"];
+
+function labelName(l) {
+  return s.labels[l] ?? l;
+}
 const MIN_EACH = 3;
 const GOAL_EACH = 10;
 const MAX_EACH = 24;
@@ -46,6 +55,7 @@ const state = {
   line: s.edo.welcome,
   prediction: null,
   shown: null,
+  alts: [],
   livePaused: false,
   scale: null,
   liveTimer: null,
@@ -106,14 +116,16 @@ function paintCollect() {
   const goal = state.persist.trainCount > 0 ? GOAL_EACH : MIN_EACH;
   $("count-cat").textContent = `${c.cat} ${s.ui.countOf} ${goal}`;
   $("count-house").textContent = `${c.house} ${s.ui.countOf} ${goal}`;
-  $("card-cat").classList.toggle("ring", state.activeLabel === "cat");
-  $("card-house").classList.toggle("ring", state.activeLabel === "house");
-  renderThumbs("cat", $("thumbs-cat"));
-  renderThumbs("house", $("thumbs-house"));
+  $("count-other").textContent = String(c.other);
+  MISSION_LABELS.forEach((l) =>
+    $("card-" + l).classList.toggle("ring", state.activeLabel === l),
+  );
+  MISSION_LABELS.forEach((l) => renderThumbs(l, $("thumbs-" + l)));
   const can = c.cat >= MIN_EACH && c.house >= MIN_EACH;
   $("btn-train").disabled = !can;
   $("btn-train").textContent = state.persist.trainCount > 0 ? s.ui.retrain : s.ui.train;
   $("btn-goto-test").classList.toggle("hidden", state.persist.trainCount === 0);
+  $("btn-sample").disabled = state.activeLabel === "other";
   let hint = "";
   if (!can) hint = s.ui.needThree;
   else if (state.persist.trainCount > 0 && (c.cat < GOAL_EACH || c.house < GOAL_EACH))
@@ -148,10 +160,14 @@ function paintTest() {
   setMeter("fam", p.familiarity, FAMILIAR_LOW);
   const c = countByLabel(state.persist.examples, MISSION_LABELS);
   $("seen-line").textContent =
-    `${s.ui.seenCount} ${c.cat} ${s.ui.seenCats} ${s.ui.and} ${c.house} ${s.ui.seenHouses}.`;
-  $("guess-label").textContent = p.label === "cat" ? s.labels.cat : s.labels.house;
-  $("btn-yes").textContent = p.label === "cat" ? s.ui.yesCat : s.ui.yesHouse;
-  $("btn-no").textContent = p.label === "cat" ? s.ui.noHouse : s.ui.noCat;
+    `${s.ui.seenCount} ${c.cat} ${s.ui.seenCats}, ${c.house} ${s.ui.seenHouses} ` +
+    `${s.ui.and} ${c.other} ${s.ui.seenOther}.`;
+  $("guess-label").textContent = labelName(p.label);
+  $("btn-yes").textContent = s.ui.yesRight;
+  const alts = MISSION_LABELS.filter((l) => l !== p.label);
+  state.alts = alts;
+  $("btn-alt1").textContent = `${s.ui.noItIs} ${labelName(alts[0])}`;
+  $("btn-alt2").textContent = `${s.ui.noItIs} ${labelName(alts[1])}`;
 }
 
 /* Una barra = una misura. Nessun termine additivo, nessuna costante di comodo. */
@@ -215,7 +231,7 @@ function hideOverlays() {
 
 async function runTrain() {
   const c = countByLabel(state.persist.examples, MISSION_LABELS);
-  if (c.cat < MIN_EACH || c.house < MIN_EACH) return;
+  if (TRAIN_LABELS.some((l) => c[l] < MIN_EACH)) return;
   $("overlay-train").classList.remove("hidden");
   state.mood = "think";
   paintMood();
@@ -285,7 +301,7 @@ function onPredict(p, canvas) {
 
 /* La terza stella si vince riconoscendo un disegno NUOVO, non raggiungendo
    una percentuale. Se l'immagine e' una di quelle gia' memorizzate, non conta. */
-function confirmGuess(ok) {
+function confirmGuess(ok, corrected = null) {
   const shot = state.shown;
   if (!shot) return;
   state.livePaused = true;
@@ -302,10 +318,9 @@ function confirmGuess(ok) {
       say(s.edo.thanks, "happy");
     }
   } else {
-    const other = p.label === "cat" ? "house" : "cat";
     say(s.edo.learnNow, "idle");
-    state.activeLabel = other;
-    void addCanvas(shot.canvas, other);
+    state.activeLabel = corrected;
+    void addCanvas(shot.canvas, corrected);
   }
   setTimeout(() => {
     state.livePaused = false;
@@ -363,7 +378,7 @@ async function startLive() {
 
 async function openCamera() {
   $("overlay-camera").classList.remove("hidden");
-  $("cam-label").textContent = state.activeLabel === "cat" ? s.labels.cat : s.labels.house;
+  $("cam-label").textContent = labelName(state.activeLabel);
   $("cam-fail").classList.add("hidden");
   const v = $("cam-video");
   try {
@@ -448,7 +463,7 @@ function bind() {
       paintCollect();
     };
   });
-  $("thumbs-cat").onclick = $("thumbs-house").onclick = (e) => {
+  $("thumbs-cat").onclick = $("thumbs-house").onclick = $("thumbs-other").onclick = (e) => {
     const id = e.target.dataset.del;
     if (!id) return;
     state.persist.examples = state.persist.examples.filter((ex) => ex.id !== id);
@@ -480,7 +495,7 @@ function bind() {
     say(s.edo.drawHint, "idle");
     $("overlay-draw").classList.remove("hidden");
     $("draw-label").textContent =
-      s.ui.draw + " · " + (state.activeLabel === "cat" ? s.labels.cat : s.labels.house);
+      s.ui.draw + " · " + labelName(state.activeLabel);
     initDraw();
   };
   $("btn-draw-close").onclick = hideOverlays;
@@ -492,6 +507,7 @@ function bind() {
     };
   });
   $("btn-sample").onclick = () => {
+    if (state.activeLabel === "other") return; // nessun disegno finto per ALTRO
     const c = countByLabel(state.persist.examples, MISSION_LABELS);
     const seed = c[state.activeLabel] + state.persist.examples.length + 1;
     void addCanvas(drawSample(state.activeLabel, seed), state.activeLabel);
@@ -521,7 +537,8 @@ function bind() {
     onPredict(predictKnn(state.persist.examples, await embedCanvas(square), state.scale), square);
   };
   $("btn-yes").onclick = () => confirmGuess(true);
-  $("btn-no").onclick = () => confirmGuess(false);
+  $("btn-alt1").onclick = () => confirmGuess(false, (state.alts || [])[0]);
+  $("btn-alt2").onclick = () => confirmGuess(false, (state.alts || [])[1]);
   $("btn-add-more").onclick = () => {
     showScreen("collect");
     say(s.edo.addMore, "idle");

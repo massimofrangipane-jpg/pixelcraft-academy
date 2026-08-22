@@ -6,6 +6,7 @@ export const strings = {
     labels: {
       cat: "GATTO",
       house: "CASA",
+      other: "NESSUNO DEI DUE",
       catShort: "gatto",
       houseShort: "casa",
     },
@@ -81,7 +82,12 @@ export const strings = {
       seenCount: "Ho visto",
       seenCats: "gatti",
       seenHouses: "case",
+      seenOther: "altre cose",
       and: "e",
+      otherTitle: "ALTRO",
+      otherHint: "Cose che non sono ne\u0027 gatti ne\u0027 case.",
+      yesRight: "Si\u0027, e\u0027 giusto",
+      noItIs: "No, e\u0027",
     },
     lesson: {
       title: "Perché i dati sono importanti",

@@ -99,6 +99,32 @@ insieme di etichette; `app.js` le dichiara in `MISSION_LABELS`. Le missioni
 
 ---
 
+## 9. Terza categoria: ALTRO (v3)
+
+Il modello era costretto a scegliere fra gatto e casa anche davanti a un
+tavolo. Un classificatore che non puo' dire "nessuno dei due" e' il difetto
+che l'app dovrebbe insegnare a riconoscere, e ce l'aveva dentro.
+
+- nella raccolta c'e' un terzo riquadro **ALTRO**, facoltativo: non concorre
+  alla soglia dei 3 esempi, serve solo a dare contro-esempi
+- nella prova i pulsanti sono tre: *Si', e' giusto* e due correzioni verso le
+  altre categorie, calcolate a runtime
+- la riga di conteggio dice anche quante "altre cose" EDO ha visto
+
+Effetto verificato su dati sintetici: senza esempi ALTRO un tavolo veniva
+classificato *casa* con accordo 60%; con 5 esempi ALTRO diventa *altro* con
+accordo 100%, senza peggiorare gatto e casa.
+
+## 10. Layout: barra dei pulsanti in mezzo al contenuto
+
+`.screen` aveva `overflow-y: auto` ma nessun `min-height: 0`. In un
+contenitore flex in colonna un figlio non si comprime sotto il proprio
+contenuto, quindi `.screen` non diventava mai un contenitore di scorrimento:
+scorreva la pagina intera e la barra `position: sticky; bottom: 0` finiva
+ancorata a meta' schermo, con il contenuto visibile sotto.
+
+Corretto con `min-height: 0` su `.screen` e altezza fissa sul guscio.
+
 ## Da sapere prima del test
 
 L'atto 2 — EDO che sbaglia con pochi esempi — **non è più garantito**, ed è
