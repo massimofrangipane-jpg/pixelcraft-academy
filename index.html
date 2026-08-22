@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#16183A" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="description"
+      content="Insegna a EDO a riconoscere i tuoi disegni. Tutto sul telefono."
+    />
+    <title>PixelCraft Academy</title>
+    <base href="./" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app" class="safe-shell">
+      <header class="header">
+        <button id="btn-back" class="btn-voxel btn-ghost btn-icon hidden" aria-label="Indietro">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M14.5 5.5 8 12l6.5 6.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.6"
+              stroke-linecap="square"
+            />
+          </svg>
+        </button>
+        <div id="header-spacer" class="btn-icon" style="visibility: hidden"></div>
+        <div class="header-meta">
+          <p class="kicker">PixelCraft Academy</p>
+          <p class="profile">Allievo</p>
+        </div>
+        <div class="stars" aria-label="Stelle">
+          <span class="star-slot" data-star="1">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3.5 14.7 9l6.1.7-4.5 4.1 1.2 6.1L12 16.8 6.5 19.9 7.7 13.8 3.2 9.7 9.3 9z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </span>
+          <span class="star-slot" data-star="2">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3.5 14.7 9l6.1.7-4.5 4.1 1.2 6.1L12 16.8 6.5 19.9 7.7 13.8 3.2 9.7 9.3 9z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </span>
+          <span class="star-slot" data-star="3">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3.5 14.7 9l6.1.7-4.5 4.1 1.2 6.1L12 16.8 6.5 19.9 7.7 13.8 3.2 9.7 9.3 9z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </span>
+        </div>
+      </header>
+
+      <section id="screen-boot" class="screen">
+        <div class="center">
+          <div class="edo-wrap" data-edo-slot="boot"></div>
+          <p id="boot-text" class="title">EDO si prepara…</p>
+          <div class="conf-track progress">
+            <div id="boot-bar" class="conf-fill high"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-welcome" class="screen hidden">
+        <div class="speech stack">
+          <div class="edo-wrap" data-edo-slot="welcome"></div>
+          <div class="speech-bubble">
+            <p class="speech-text" data-line>Ciao! Sono EDO. Insegnami i disegni.</p>
+            <button class="btn-voxel btn-paper btn-icon btn-speak" data-speak aria-label="Ascolta EDO"></button>
+          </div>
+        </div>
+        <div class="pad" style="margin-top: 24px">
+          <h1 class="title">Insegna a EDO a riconoscere i miei disegni</h1>
+          <p class="muted" style="margin-top: 8px">Mostra un disegno. EDO prova a dire che cos'è.</p>
+        </div>
+        <div class="actions">
+          <button id="btn-start" class="btn-voxel btn-wide">Inizia</button>
+        </div>
+      </section>
+
+      <section id="screen-collect" class="screen hidden">
+        <div class="speech">
+          <div class="edo-wrap compact" data-edo-slot="collect"></div>
+          <div class="speech-bubble">
+            <p class="speech-text" data-line></p>
+            <button class="btn-voxel btn-paper btn-icon btn-speak" data-speak aria-label="Ascolta EDO"></button>
+          </div>
+        </div>
+        <p class="hint pad">Tocca GATTO o CASA, poi aggiungi un disegno.</p>
+        <div class="grid-2 pad">
+          <div id="card-cat" class="panel ring">
+            <button type="button" class="card-head" data-select="cat">
+              <svg class="icon-lg cat-fill" viewBox="0 0 48 48" aria-hidden="true">
+                <rect x="8" y="16" width="32" height="24" fill="currentColor" />
+                <path d="M8 16 16 4 22 16" fill="currentColor" />
+                <path d="M26 16 32 4 40 16" fill="currentColor" />
+                <rect x="16" y="24" width="5" height="5" fill="#0d1c1e" />
+                <rect x="27" y="24" width="5" height="5" fill="#0d1c1e" />
+              </svg>
+              <span>
+                <strong>GATTO</strong>
+                <span class="count" id="count-cat">0 di 3</span>
+              </span>
+            </button>
+            <div class="thumbs" id="thumbs-cat"></div>
+          </div>
+          <div id="card-house" class="panel">
+            <button type="button" class="card-head" data-select="house">
+              <svg class="icon-lg house-fill" viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M6 22 24 6 42 22v4H6z" fill="currentColor" />
+                <rect x="10" y="24" width="28" height="18" fill="currentColor" />
+                <rect x="20" y="30" width="8" height="12" fill="#0d1c1e" />
+              </svg>
+              <span>
+                <strong>CASA</strong>
+                <span class="count" id="count-house">0 di 3</span>
+              </span>
+            </button>
+            <div class="thumbs" id="thumbs-house"></div>
+          </div>
+        </div>
+        <p id="collect-hint" class="hint pad"></p>
+        <div class="actions">
+          <div class="grid-3">
+            <button id="btn-photo" class="btn-voxel btn-paper">Fotografa</button>
+            <button id="btn-draw" class="btn-voxel btn-paper">Disegna</button>
+            <button id="btn-sample" class="btn-voxel btn-ghost">Disegno di prova</button>
+          </div>
+          <button id="btn-train" class="btn-voxel btn-wide" disabled>Addestra</button>
+          <button id="btn-goto-test" class="btn-voxel btn-ghost btn-wide hidden">Prova EDO</button>
+        </div>
+      </section>
+
+      <section id="screen-test" class="screen hidden">
+        <div class="speech">
+          <div class="edo-wrap compact" data-edo-slot="test"></div>
+          <div class="speech-bubble">
+            <p class="speech-text" data-line></p>
+            <button class="btn-voxel btn-paper btn-icon btn-speak" data-speak aria-label="Ascolta EDO"></button>
+          </div>
+        </div>
+        <div class="viewfinder">
+          <video id="live-video" class="hidden" playsinline muted autoplay></video>
+          <p id="cam-fallback" class="cam-fallback">Mostra un disegno. EDO prova a dire che cos'è.</p>
+        </div>
+        <div id="conf-box" class="conf hidden">
+          <div class="meter">
+            <div class="conf-top">
+              <span>Sicurezza</span>
+              <span id="conf-value">0%</span>
+            </div>
+            <div class="conf-track"><div id="conf-fill" class="conf-fill"></div></div>
+            <p class="meter-help" id="conf-help">Quanto i disegni simili sono d'accordo</p>
+          </div>
+          <div class="meter">
+            <div class="conf-top">
+              <span>Somiglianza</span>
+              <span id="fam-value">0%</span>
+            </div>
+            <div class="conf-track"><div id="fam-fill" class="conf-fill"></div></div>
+            <p class="meter-help" id="fam-help">Quanto assomiglia a cio' che ho visto</p>
+          </div>
+          <p class="seen-line" id="seen-line"></p>
+        </div>
+        <p id="guess-label" class="guess hidden"></p>
+        <p class="hint pad">Usa un disegno nuovo, mai fotografato.</p>
+        <div class="actions">
+          <div id="confirm-row" class="hidden" style="display: flex; flex-direction: column; gap: 8px">
+            <button id="btn-yes" class="btn-voxel">Sì, è un GATTO</button>
+            <button id="btn-no" class="btn-voxel btn-ghost">No, è una CASA</button>
+          </div>
+          <div class="grid-2">
+            <button id="btn-shutter" class="btn-voxel btn-paper">Scatta</button>
+            <button id="btn-test-sample" class="btn-voxel btn-ghost">Disegno di prova</button>
+          </div>
+          <button id="btn-add-more" class="btn-voxel btn-ghost btn-wide">Aggiungi disegni</button>
+          <button id="btn-lesson" class="btn-voxel btn-star btn-wide hidden">Perché i dati sono importanti</button>
+        </div>
+        <input id="file-input" type="file" accept="image/*" capture="environment" hidden />
+      </section>
+
+      <section id="screen-lesson" class="screen hidden">
+        <div class="pad" style="display: flex; justify-content: space-between; align-items: center">
+          <h1 class="title">Perché i dati sono importanti</h1>
+          <button id="btn-lesson-speak" class="btn-voxel btn-paper btn-icon" aria-label="Ascolta EDO"></button>
+        </div>
+        <div class="panel lesson-card"><p id="lesson-p1"></p></div>
+        <div class="panel lesson-card"><p id="lesson-p2"></p></div>
+        <div class="panel lesson-card"><p id="lesson-p3"></p></div>
+        <div class="panel lesson-card"><p id="lesson-p4"></p></div>
+        <div class="actions">
+          <button id="btn-lesson-done" class="btn-voxel btn-wide">Ho capito</button>
+        </div>
+      </section>
+
+      <section id="screen-complete" class="screen hidden">
+        <div class="speech stack">
+          <div class="edo-wrap" data-edo-slot="complete"></div>
+          <div class="speech-bubble">
+            <p class="speech-text" data-line></p>
+            <button class="btn-voxel btn-paper btn-icon btn-speak" data-speak aria-label="Ascolta EDO"></button>
+          </div>
+        </div>
+        <div class="pad" style="text-align: center; margin-top: 16px">
+          <h1 class="title">Missione 1 completata</h1>
+          <p class="muted" style="margin-top: 8px">Hai insegnato tu a EDO. Senza i tuoi disegni non sapeva niente.</p>
+        </div>
+      </section>
+    </div>
+
+    <div id="overlay-permission" class="modal hidden">
+      <div class="modal-card">
+        <button id="btn-perm-cancel" class="btn-voxel btn-ghost">Annulla</button>
+        <div class="edo-wrap" data-edo-slot="perm" style="margin: 12px auto 0"></div>
+        <p class="title" style="text-align: center; margin-top: 12px">Mi serve la fotocamera per vedere.</p>
+        <p class="muted" style="text-align: center; margin-top: 8px">
+          EDO ha bisogno della fotocamera per vedere i tuoi disegni. Le foto restano sul telefono.
+        </p>
+        <button id="btn-perm-ok" class="btn-voxel btn-wide" style="margin-top: 20px">Va bene</button>
+      </div>
+    </div>
+
+    <div id="overlay-camera" class="overlay-full hidden">
+      <div class="safe-shell" style="height: 100%">
+        <div class="header">
+          <button id="btn-cam-close" class="btn-voxel btn-paper btn-icon" aria-label="Indietro"></button>
+          <p class="profile" id="cam-label">GATTO</p>
+        </div>
+        <video id="cam-video" style="flex: 1; width: 100%; background: #000; object-fit: cover" playsinline muted autoplay></video>
+        <p id="cam-fail" class="hint hidden">Niente fotocamera. Scatta o disegna.</p>
+        <div class="actions">
+          <button id="btn-snap" class="btn-voxel btn-wide">Scatta</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="overlay-draw" class="overlay-full hidden">
+      <div class="safe-shell" style="height: 100%">
+        <div class="header">
+          <button id="btn-draw-close" class="btn-voxel btn-ghost btn-icon" aria-label="Indietro"></button>
+          <p class="profile" id="draw-label">Disegna</p>
+        </div>
+        <p class="hint pad">Disegna con il dito.</p>
+        <canvas id="draw-canvas" class="draw-canvas" width="320" height="320"></canvas>
+        <div class="pad" style="display: flex; gap: 8px; align-items: center">
+          <button class="swatch" data-ink="#16183a" style="background: #16183a" aria-label="Colore"></button>
+          <button class="swatch" data-ink="#e8954a" style="background: #e8954a" aria-label="Colore"></button>
+          <button class="swatch" data-ink="#d4544a" style="background: #d4544a" aria-label="Colore"></button>
+          <button id="btn-draw-clear" class="btn-voxel btn-ghost" style="margin-left: auto">Cancella</button>
+        </div>
+        <div class="actions">
+          <button id="btn-draw-save" class="btn-voxel btn-wide">Salva</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="overlay-train" class="modal hidden">
+      <div class="modal-card" style="text-align: center">
+        <div class="edo-wrap" data-edo-slot="train" style="margin: 0 auto"></div>
+        <p class="title" style="margin-top: 16px">Studio i tuoi disegni.</p>
+      </div>
+    </div>
+
+    <script src="./vendor/tf.min.js"></script>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
