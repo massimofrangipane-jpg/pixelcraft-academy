@@ -1,8 +1,9 @@
 import { strings, DEFAULT_LOCALE } from "./strings.js";
-import { predictKnn, countByLabel, neighbourScale } from "./knn.js";
+import { predictKnn, countByLabel, neighbourScale, scoreFor } from "./knn.js";
+import { occlusionMap, drawSpotlight, hottestCell } from "./explain.js";
 import { canvasToSquare, fileToSquare, toThumb, videoToSquare } from "./image.js";
 import { drawSample } from "./samples.js";
-import { speak } from "./speech.js";
+import { speak, primeVoice } from "./speech.js";
 import { emptyPersist, loadPersist, savePersist } from "./store.js";
 import { initBrain, embedCanvas } from "./brain.js";
 
@@ -21,8 +22,6 @@ const MIN_EACH = 3;
 const GOAL_EACH = 10;
 const MAX_EACH = 24;
 // Soglie su MISURE reali, non su conteggi.
-const AGREE_LOW = 0.70;    // sotto: i vicini non sono d'accordo fra loro
-const FAMILIAR_LOW = 0.35; // sotto: nulla di simile fra i disegni visti
 
 const EDO_HTML = `
   <div class="edo idle">
@@ -54,9 +53,10 @@ const state = {
   mood: "idle",
   line: s.edo.welcome,
   prediction: null,
-  shown: null,
   alts: [],
-  livePaused: false,
+  phase: "aim",
+  frozen: null,
+  childBet: null,
   scale: null,
   liveTimer: null,
   liveStream: null,
@@ -149,42 +149,176 @@ function renderThumbs(label, root) {
     .join("");
 }
 
-function paintTest() {
-  const p = state.prediction;
-  $("conf-box").classList.toggle("hidden", !p);
-  $("guess-label").classList.toggle("hidden", !p);
-  $("confirm-row").classList.toggle("hidden", !p);
+/* ---- Schermata di prova: scommessa -> rivelazione -> perche' ----
+   Il bambino dichiara COSA DIRA' EDO prima di vederlo. Il punto si vince
+   prevedendo EDO, non avendo un modello bravo: per prevederlo bisogna
+   averlo capito. */
+
+function setPhase(phase) {
+  state.phase = phase;
+  $("phase-bet").classList.toggle("hidden", phase !== "bet");
+  $("phase-reveal").classList.toggle("hidden", phase !== "reveal");
+  $("btn-freeze").classList.toggle("hidden", phase !== "aim");
+  $("btn-again").classList.toggle("hidden", phase === "aim");
+  $("frozen-canvas").classList.toggle("hidden", phase === "aim");
+  $("live-video").classList.toggle("hidden", phase !== "aim" || !state.liveStream);
+  $("fix-row").classList.add("hidden");
+  $("where-bar").classList.add("hidden");
   $("btn-lesson").classList.toggle("hidden", !state.persist.lessonUnlocked);
-  if (!p) return;
-  setMeter("conf", p.agreement, AGREE_LOW);
-  setMeter("fam", p.familiarity, FAMILIAR_LOW);
-  const c = countByLabel(state.persist.examples, MISSION_LABELS);
-  $("seen-line").textContent =
-    `${s.ui.seenCount} ${c.cat} ${s.ui.seenCats}, ${c.house} ${s.ui.seenHouses} ` +
-    `${s.ui.and} ${c.other} ${s.ui.seenOther}.`;
-  $("guess-label").textContent = labelName(p.label);
-  $("btn-yes").textContent = s.ui.yesRight;
-  const alts = MISSION_LABELS.filter((l) => l !== p.label);
-  state.alts = alts;
-  $("btn-alt1").textContent = `${s.ui.noItIs} ${labelName(alts[0])}`;
-  $("btn-alt2").textContent = `${s.ui.noItIs} ${labelName(alts[1])}`;
+  paintBetScore();
 }
 
-/* Una barra = una misura. Nessun termine additivo, nessuna costante di comodo. */
-function setMeter(prefix, value, low) {
-  const el = $(prefix + "-value");
-  const fill = $(prefix + "-fill");
-  if (value === null || value === undefined) {
-    el.textContent = "--";
-    fill.style.width = "0%";
-    fill.className = "conf-fill";
-    return;
+function paintBetScore() {
+  const p = state.persist;
+  $("bet-score").textContent = p.betTries
+    ? `Hai previsto EDO ${p.betHits} volte su ${p.betTries}.`
+    : "";
+}
+
+function showFrozen(canvas) {
+  const c = $("frozen-canvas");
+  c.width = canvas.width;
+  c.height = canvas.height;
+  c.getContext("2d").drawImage(canvas, 0, 0);
+  state.frozen = canvas;
+  $("cam-fallback").classList.add("hidden");
+}
+
+/* Congela il fotogramma e passa alla scommessa. Nessuna risposta ancora. */
+async function freezeAndBet(canvas) {
+  stopLive();
+  showFrozen(canvas);
+  state.prediction = null;
+  state.childBet = null;
+  setPhase("bet");
+  say(s.edo.betAsk, "think");
+  try {
+    state.prediction = predictKnn(
+      state.persist.examples,
+      await embedCanvas(canvas),
+      state.scale,
+    );
+  } catch {
+    state.prediction = null;
   }
-  const pct = Math.round(value * 100);
-  el.textContent = pct + "%";
-  fill.style.width = pct + "%";
-  fill.className =
-    "conf-fill" + (value >= 0.85 ? " high" : value >= low ? " ok" : "");
+}
+
+function placeBet(label) {
+  if (state.phase !== "bet" || !state.prediction) return;
+  state.childBet = label;
+  const p = state.persist;
+  p.betTries += 1;
+  if (label === state.prediction.label) p.betHits += 1;
+  persistNow();
+  setPhase("reveal");
+  paintReveal();
+}
+
+/* La spiegazione non e' una percentuale: sono i disegni che hanno votato.
+   Sono gli stessi che l'algoritmo ha davvero usato. */
+function paintReveal() {
+  const p = state.prediction;
+  if (!p) return;
+  const hit = state.childBet === p.label;
+  $("verdict").textContent = hit ? s.edo.betRight : s.edo.betWrong;
+  $("verdict").className = "verdict " + (hit ? "good" : "miss");
+  $("edo-answer").textContent = labelName(p.label);
+
+  const votes = p.neighbours.filter((n) => n.label === p.label).length;
+  $("vote-line").textContent = `${votes} ${s.ui.outOf} ${p.neighbours.length} ${s.ui.sayThis} ${labelName(p.label)}.`;
+
+  const root = $("neighbours");
+  root.innerHTML = "";
+  p.neighbours.forEach((n) => {
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "neigh-cell" + (n.label === p.label ? " agrees" : "");
+    cell.dataset.drop = n.id;
+    cell.innerHTML =
+      (n.thumb ? `<img src="${n.thumb}" alt="" />` : `<span class="neigh-blank"></span>`) +
+      `<span class="neigh-tag">${labelName(n.label)}</span>`;
+    root.appendChild(cell);
+  });
+
+  const alts = MISSION_LABELS.filter((l) => l !== p.label);
+  state.alts = alts;
+  $("btn-fix1").textContent = labelName(alts[0]);
+  $("btn-fix2").textContent = labelName(alts[1]);
+
+  say(hit ? s.edo.betRight : s.edo.betWrong, hit ? "happy" : "idle");
+}
+
+/* Buttare via un esempio e vedere cambiare la risposta all'istante:
+   questo E' addestrare, e con KNN non serve nemmeno riaddestrare. */
+async function dropExample(id) {
+  const ex = state.persist.examples.find((e) => e.id === id);
+  if (!ex || !state.frozen) return;
+  state.persist.examples = state.persist.examples.filter((e) => e.id !== id);
+  refreshScale();
+  persistNow();
+  const before = state.prediction?.label;
+  state.prediction = predictKnn(
+    state.persist.examples,
+    await embedCanvas(state.frozen),
+    state.scale,
+  );
+  paintReveal();
+  const after = state.prediction?.label;
+  say(before !== after ? s.edo.changedMind : s.edo.sameMind, "think");
+}
+
+/* Occlusione: 25 passaggi del modello, tutto in locale. */
+async function whereLooked() {
+  const p = state.prediction;
+  if (!p || !state.frozen) return;
+  $("btn-where").disabled = true;
+  $("where-bar").classList.remove("hidden");
+  $("where-fill").style.width = "0%";
+  say(s.edo.looking2, "think");
+  try {
+    const { cells } = await occlusionMap(
+      state.frozen,
+      (c) => embedCanvas(c),
+      (v) => scoreFor(state.persist.examples, v, p.label),
+      (t) => {
+        $("where-fill").style.width = Math.round(t * 100) + "%";
+      },
+    );
+    drawSpotlight($("frozen-canvas"), state.frozen, cells);
+    const hot = hottestCell(cells);
+    say(`${s.edo.lookedAt} ${hot.row}, a ${hot.col}.`, "happy");
+  } catch {
+    say(s.edo.noWhere, "unsure");
+  } finally {
+    $("where-bar").classList.add("hidden");
+    $("btn-where").disabled = false;
+  }
+}
+
+function judge(correct) {
+  const p = state.prediction;
+  if (!p) return;
+  if (correct) {
+    $("fix-row").classList.add("hidden");
+    if (!p.isNew) say(s.edo.sameDrawing, "unsure");
+    else if (!state.persist.stars.three) {
+      state.persist.stars.three = true;
+      persistNow();
+      paintStars();
+      say(s.edo.star3, "happy");
+    } else say(s.edo.thanks, "happy");
+  } else {
+    $("fix-row").classList.remove("hidden");
+    say(s.edo.whatIsIt, "unsure");
+  }
+}
+
+function fixWith(label) {
+  if (!label || !state.frozen) return;
+  state.activeLabel = label;
+  void addCanvas(state.frozen, label);
+  $("fix-row").classList.add("hidden");
+  say(s.edo.learnNow, "idle");
 }
 
 function persistNow() {
@@ -254,77 +388,14 @@ async function runTrain() {
   persistNow();
   hideOverlays();
   state.prediction = null;
-  state.shown = null;
+  state.frozen = null;
   refreshScale();
   showScreen("test");
   paintStars();
-  paintTest();
+  setPhase("aim");
   if (reachedTen) say(s.edo.highConf, "happy");
   else say(s.edo.trained, "happy");
   startLive();
-}
-
-/* Due incertezze diverse meritano due frasi diverse:
-   "non ho mai visto niente di simile" != "i disegni simili non sono d'accordo". */
-function onPredict(p, canvas) {
-  state.prediction = p;
-  state.shown = p ? { canvas, prediction: p } : null;
-  if (!p) {
-    paintTest();
-    return;
-  }
-  const unfamiliar = p.familiarity !== null && p.familiarity < FAMILIAR_LOW;
-  const split = p.agreement < AGREE_LOW;
-  let line, mood;
-  if (unfamiliar) {
-    line = s.edo.unfamiliar + " " + s.edo.askMore;
-    mood = "unsure";
-  } else if (split) {
-    line = s.edo.split + " " + s.edo.askMore;
-    mood = "unsure";
-  } else {
-    line = p.label === "cat" ? s.edo.guessCat : s.edo.guessHouse;
-    mood = "idle";
-  }
-  if ((unfamiliar || split) && !state.persist.seenAct2) {
-    state.persist.seenAct2 = true;
-    persistNow();
-    say(line, mood);
-  } else {
-    state.line = line;
-    state.mood = mood;
-    paintSpeech();
-    paintMood();
-  }
-  paintTest();
-}
-
-/* La terza stella si vince riconoscendo un disegno NUOVO, non raggiungendo
-   una percentuale. Se l'immagine e' una di quelle gia' memorizzate, non conta. */
-function confirmGuess(ok, corrected = null) {
-  const shot = state.shown;
-  if (!shot) return;
-  state.livePaused = true;
-  const p = shot.prediction;
-  if (ok) {
-    if (!p.isNew) {
-      say(s.edo.sameDrawing, "unsure");
-    } else if (!state.persist.stars.three) {
-      state.persist.stars.three = true;
-      persistNow();
-      paintStars();
-      say(s.edo.star3, "happy");
-    } else {
-      say(s.edo.thanks, "happy");
-    }
-  } else {
-    say(s.edo.learnNow, "idle");
-    state.activeLabel = corrected;
-    void addCanvas(shot.canvas, corrected);
-  }
-  setTimeout(() => {
-    state.livePaused = false;
-  }, 1400);
 }
 
 function stopLive() {
@@ -358,17 +429,8 @@ async function startLive() {
     await video.play();
     video.classList.remove("hidden");
     $("cam-fallback").classList.add("hidden");
-    state.liveTimer = setInterval(async () => {
-      if (video.readyState < 2 || state.livePaused) return;
-      try {
-        const square = videoToSquare(video);
-        const p = predictKnn(state.persist.examples, await embedCanvas(square), state.scale);
-        if (state.livePaused) return; // arrivata una conferma mentre calcolavo
-        onPredict(p, square);
-      } catch {
-        /* fotogramma saltato */
-      }
-    }, 550);
+    /* Nessuna predizione continua: EDO risponde solo quando il bambino
+       blocca l'immagine, cosi' la risposta e' un evento e non un rumore. */
   } catch {
     video.classList.add("hidden");
     $("cam-fallback").classList.remove("hidden");
@@ -452,6 +514,7 @@ function bind() {
   document.querySelectorAll("[data-speak]").forEach((b) => {
     b.onclick = () => speak(state.line);
   });
+  document.addEventListener("pointerdown", primeVoice, { once: true });
   $("btn-start").onclick = () => {
     showScreen("collect");
     say(s.edo.intro, "idle");
@@ -515,30 +578,43 @@ function bind() {
   $("btn-train").onclick = () => void runTrain();
   $("btn-goto-test").onclick = () => {
     showScreen("test");
+    state.frozen = null;
+    setPhase("aim");
     say(s.edo.looking, "idle");
-    paintTest();
     startLive();
   };
+  $("btn-freeze").onclick = () => {
+    const v = $("live-video");
+    if (state.liveStream && v.readyState >= 2) void freezeAndBet(videoToSquare(v));
+    else $("file-input").click();
+  };
+  $("btn-again").onclick = () => {
+    state.frozen = null;
+    setPhase("aim");
+    say(s.edo.looking, "idle");
+    if (!state.liveStream) startLive();
+  };
+  document.querySelectorAll("[data-bet]").forEach((b) => {
+    b.onclick = () => placeBet(b.dataset.bet);
+  });
+  $("neighbours").onclick = (e) => {
+    const cell = e.target.closest("[data-drop]");
+    if (cell) void dropExample(cell.dataset.drop);
+  };
+  $("btn-where").onclick = () => void whereLooked();
+  $("btn-right").onclick = () => judge(true);
+  $("btn-wrong").onclick = () => judge(false);
+  $("btn-fix1").onclick = () => fixWith((state.alts || [])[0]);
+  $("btn-fix2").onclick = () => fixWith((state.alts || [])[1]);
   $("btn-shutter").onclick = () => $("file-input").click();
   $("file-input").onchange = async (e) => {
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f) return;
     const square = await fileToSquare(f);
-    if (state.screen === "test") {
-      onPredict(predictKnn(state.persist.examples, await embedCanvas(square), state.scale), square);
-    } else {
-      void addCanvas(square, state.activeLabel);
-    }
+    if (state.screen === "test") void freezeAndBet(square);
+    else void addCanvas(square, state.activeLabel);
   };
-  $("btn-test-sample").onclick = async () => {
-    const guess = Math.random() > 0.5 ? "cat" : "house";
-    const square = canvasToSquare(drawSample(guess, Date.now() % 99991));
-    onPredict(predictKnn(state.persist.examples, await embedCanvas(square), state.scale), square);
-  };
-  $("btn-yes").onclick = () => confirmGuess(true);
-  $("btn-alt1").onclick = () => confirmGuess(false, (state.alts || [])[0]);
-  $("btn-alt2").onclick = () => confirmGuess(false, (state.alts || [])[1]);
   $("btn-add-more").onclick = () => {
     showScreen("collect");
     say(s.edo.addMore, "idle");

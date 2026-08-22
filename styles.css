@@ -733,3 +733,102 @@ img {
     animation: none;
   }
 }
+
+/* ---- Schermata di prova: scommessa, rivelazione, vicini ---- */
+
+.shot {
+  width: 100%;
+  display: block;
+  background: var(--paper);
+}
+
+.where-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  background: rgba(6, 10, 34, 0.6);
+}
+
+.where-bar > div {
+  height: 100%;
+  width: 0%;
+  background: var(--edo);
+  transition: width 0.12s linear;
+}
+
+.ask {
+  font-size: 17px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.verdict {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.verdict.good {
+  color: var(--edo);
+}
+
+.verdict.miss {
+  color: var(--muted);
+}
+
+.votes {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.neigh {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.neigh-cell {
+  position: relative;
+  padding: 0;
+  border: 3px solid var(--surface-2);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--paper);
+  aspect-ratio: 1;
+  color: inherit;
+}
+
+.neigh-cell.agrees {
+  border-color: var(--edo);
+}
+
+.neigh-cell img,
+.neigh-blank {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.neigh-tag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 3px 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-align: center;
+  background: rgba(6, 10, 34, 0.82);
+  color: var(--fg);
+}

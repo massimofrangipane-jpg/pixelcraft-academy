@@ -125,6 +125,40 @@ ancorata a meta' schermo, con il contenuto visibile sotto.
 
 Corretto con `min-height: 0` su `.screen` e altezza fissa sul guscio.
 
+## 11. La svolta: si impara facendo (v4)
+
+Le due barre erano oneste ma non spiegavano niente a un bambino. "68%" non
+e' comprensione, e' un numero che si muove. La spiegazione pero' era gia'
+dentro l'algoritmo: KNN decide guardando i vicini piu' simili e contando i
+voti. Bastava mostrarlo.
+
+**Scommessa prima della risposta.** Il bambino blocca l'immagine e dichiara
+cosa dira' EDO, poi vede. Il punto si vince prevedendo EDO, non avendo un
+modello bravo: per prevederlo bisogna averlo capito. Funziona anche quando
+EDO sbaglia, anzi meglio.
+
+**I vicini, con le loro facce.** Al posto della percentuale ci sono le tre
+foto che hanno votato, con la loro etichetta e il bordo acceso su quelle
+d'accordo. "2 su 3 dicono CASA" e' la stessa informazione della barra, ma
+guardabile.
+
+**Buttare via un esempio.** Toccando una foto la si elimina: EDO ricalcola
+all'istante e dice se ha cambiato idea. Con KNN non serve riaddestrare.
+Questo e' addestrare davvero: capire perche' ha sbagliato e togliere la causa.
+
+**"Dove ho guardato".** Occlusione a griglia 5x5: copro un quadretto alla
+volta, rimisuro, e dove la risposta crolla quel pezzo contava. Sull'immagine
+resta illuminato solo cio' che il modello usava. 25 passaggi del modello,
+tutti in locale, deterministici.
+
+**Niente predizione continua.** Prima EDO ricalcolava ogni 550 ms: rumore.
+Ora risponde solo quando il bambino blocca, cosi' la risposta e' un evento.
+
+**Voce.** Selezione della voce di sistema piu' morbida (enhanced/premium se
+presenti, poi le italiane note), lettura piu' lenta, tono leggermente alto,
+micro-pause sulle virgole, e sblocco al primo tocco perche' su iOS la sintesi
+resta muta finche' non nasce da un gesto.
+
 ## Da sapere prima del test
 
 L'atto 2 — EDO che sbaglia con pochi esempi — **non è più garantito**, ed è

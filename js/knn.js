@@ -68,6 +68,16 @@ export function kFor(n) {
    familiarity nearestDist rapportata alla scala dei dati del bambino
    neighbours  i k vicini usati, per poterli mostrare
    Il numero di esempi non compare in nessuno di questi valori. */
+/* Quota di voto che una data etichetta riceve per un vettore.
+   Serve all'occlusione: misura quanto quel pezzo di immagine sosteneva
+   la risposta gia' data. */
+export function scoreFor(examples, vector, label) {
+  const p = predictKnn(examples, vector);
+  if (!p) return 0;
+  const total = Object.values(p.weights).reduce((a, b) => a + b, 0) || 1;
+  return (p.weights[label] || 0) / total;
+}
+
 export function predictKnn(examples, vector, scale = null) {
   const labels = labelsOf(examples);
   if (examples.length === 0 || labels.length === 0) return null;

@@ -5,6 +5,8 @@ export function emptyPersist() {
     examples: [],
     stars: { one: false, two: false, three: false },
     trainCount: 0,
+    betHits: 0,
+    betTries: 0,
     examplesAtLastTrain: 0,
     lessonUnlocked: false,
     seenAct2: false,
