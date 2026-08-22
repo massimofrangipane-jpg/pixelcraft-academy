@@ -23,14 +23,35 @@ const GOAL_EACH = 10;
 const MAX_EACH = 24;
 // Soglie su MISURE reali, non su conteggi.
 
+/* EDO: personaggio a blocchi in stile voxel. Testa cubica con volto a
+   pixel — riccioli quadrati, occhi azzurro ghiaccio, sorriso aperto —
+   e corpo da robottino. Le classi .edo-eye e .edo-light restano perche'
+   le animazioni degli stati d'animo lavorano su quelle. */
 const EDO_HTML = `
   <div class="edo idle">
-    <span class="edo-knob"></span>
-    <span class="edo-antenna"></span>
+    <div class="edo-curls">
+      <i style="--x: 2px;   --y: 16px; --s: 22px"></i>
+      <i style="--x: 20px;  --y: 4px;  --s: 26px"></i>
+      <i style="--x: 44px;  --y: -2px; --s: 28px"></i>
+      <i style="--x: 70px;  --y: 3px;  --s: 26px"></i>
+      <i style="--x: 94px;  --y: 15px; --s: 22px"></i>
+      <i style="--x: 14px;  --y: 30px; --s: 18px"></i>
+      <i style="--x: 36px;  --y: 22px; --s: 20px"></i>
+      <i style="--x: 62px;  --y: 21px; --s: 20px"></i>
+      <i style="--x: 86px;  --y: 30px; --s: 18px"></i>
+      <i class="side" style="--x: -2px; --y: 40px; --s: 16px"></i>
+      <i class="side" style="--x: 102px; --y: 40px; --s: 16px"></i>
+    </div>
     <div class="edo-head">
-      <div class="edo-visor">
+      <div class="edo-face">
+        <span class="edo-brow left"></span>
+        <span class="edo-brow right"></span>
         <span class="edo-eye left"><span class="edo-pupil"></span></span>
         <span class="edo-eye right"><span class="edo-pupil"></span></span>
+        <span class="edo-nose"></span>
+        <span class="edo-cheek left"></span>
+        <span class="edo-cheek right"></span>
+        <span class="edo-mouth"><span class="edo-teeth"></span></span>
       </div>
     </div>
     <span class="edo-arm left"></span>
@@ -165,6 +186,9 @@ function setPhase(phase) {
   $("fix-row").classList.add("hidden");
   $("where-bar").classList.add("hidden");
   $("btn-lesson").classList.toggle("hidden", !state.persist.lessonUnlocked);
+  // meno pulsanti a schermo nelle fasi in cui non servono: tutto deve stare
+  // in una schermata sola, senza scorrere
+  $("secondary-row").classList.toggle("hidden", phase !== "aim");
   paintBetScore();
 }
 

@@ -832,3 +832,294 @@ img {
   background: rgba(6, 10, 34, 0.82);
   color: var(--fg);
 }
+
+/* ---- EDO v2: capelli ricci a blocchi, occhi azzurro ghiaccio ---- */
+
+:root {
+  --hair: #f2d98c;
+  --hair-dark: #d8b558;
+  --ice: #bfe9ff;
+  --ice-deep: #6cc4ee;
+  --cheek: #f09a86;
+}
+
+.edo-curls {
+  position: absolute;
+  left: 8px;
+  top: -6px;
+  width: 116px;
+  height: 44px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ogni ricciolo e' un blocco: nessuna curva, coerente con lo stile voxel */
+.edo-curls i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  background: var(--hair);
+  border: 3px solid var(--visor);
+  box-shadow: inset -4px -4px 0 var(--hair-dark);
+}
+
+.edo-antenna,
+.edo-knob {
+  z-index: 5;
+}
+
+.edo-eye {
+  width: 18px;
+  height: 18px;
+  top: 10px;
+  background: var(--ice);
+  border: 2px solid var(--ice-deep);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(108, 196, 238, 0.75);
+}
+
+.edo-eye.left {
+  left: 14px;
+}
+
+.edo-eye.right {
+  right: 14px;
+}
+
+/* pupilla scura + riflesso: e' il riflesso che rende lo sguardo vivo */
+.edo-pupil {
+  left: 4px;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--visor);
+  box-shadow: 5px -3px 0 rgba(255, 255, 255, 0.95);
+}
+
+.edo-cheek {
+  position: absolute;
+  bottom: 8px;
+  width: 12px;
+  height: 8px;
+  background: var(--cheek);
+  opacity: 0.75;
+}
+
+.edo-cheek.left {
+  left: 12px;
+}
+
+.edo-cheek.right {
+  right: 12px;
+}
+
+/* ---- Tutto in una schermata: niente scorrimento per raggiungere i tasti ---- */
+
+.viewfinder {
+  min-height: 0;
+}
+
+.viewfinder video,
+.viewfinder .cam-fallback,
+.viewfinder .shot {
+  height: clamp(110px, 24vh, 190px);
+  object-fit: cover;
+}
+
+#screen-test .speech {
+  padding: 0 12px;
+}
+
+#screen-test .speech-text {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+#screen-test .edo-wrap.compact {
+  width: 66px;
+  height: 84px;
+}
+
+#screen-test .edo-wrap.compact .edo {
+  transform: scale(0.5);
+}
+
+#screen-test .ask {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+#screen-test .neigh {
+  margin-top: 8px;
+}
+
+#screen-test .neigh-cell {
+  aspect-ratio: 1.15;
+}
+
+#screen-test .verdict {
+  font-size: 14px;
+}
+
+#screen-test .votes {
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+#screen-test #neigh-help {
+  margin: 6px 0 8px;
+}
+
+#screen-test .actions {
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+}
+
+/* ---- EDO v3: volto a pixel in stile voxel ---- */
+
+:root {
+  --skin: #f6cda6;
+  --skin-dark: #dda87c;
+  --brow: #cba85e;
+  --mouth: #6b2b34;
+}
+
+/* niente antenna: il posto in cima e' dei capelli */
+.edo-antenna,
+.edo-knob {
+  display: none;
+}
+
+.edo-head {
+  background: var(--skin);
+  box-shadow: 6px 6px 0 var(--skin-dark);
+}
+
+.edo-curls i.side {
+  box-shadow: inset -3px -3px 0 var(--hair-dark);
+}
+
+/* il volto occupa il cubo intero: nessuna visiera scura */
+.edo-face {
+  position: absolute;
+  inset: 0;
+}
+
+.edo-brow {
+  position: absolute;
+  top: 16px;
+  width: 20px;
+  height: 6px;
+  background: var(--brow);
+}
+
+.edo-brow.left {
+  left: 16px;
+}
+
+.edo-brow.right {
+  right: 16px;
+}
+
+.edo-eye {
+  position: absolute;
+  top: 26px;
+  width: 18px;
+  height: 16px;
+  background: #ffffff;
+  border: 3px solid var(--visor);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.edo-eye.left {
+  left: 15px;
+}
+
+.edo-eye.right {
+  right: 15px;
+}
+
+/* iride azzurro ghiaccio a blocco, come una skin di Minecraft */
+.edo-pupil {
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 9px;
+  height: 100%;
+  border-radius: 0;
+  background: var(--ice);
+  box-shadow: inset 0 -5px 0 var(--ice-deep);
+}
+
+.edo-eye.right .edo-pupil {
+  left: auto;
+  right: 3px;
+}
+
+.edo-nose {
+  position: absolute;
+  left: 50%;
+  top: 46px;
+  width: 8px;
+  height: 6px;
+  margin-left: -4px;
+  background: var(--skin-dark);
+}
+
+.edo-cheek {
+  position: absolute;
+  top: 50px;
+  bottom: auto;
+  width: 12px;
+  height: 8px;
+  background: var(--cheek);
+  opacity: 0.85;
+}
+
+.edo-cheek.left {
+  left: 8px;
+}
+
+.edo-cheek.right {
+  right: 8px;
+}
+
+/* sorriso aperto con la fila di denti: e' il tratto che lo fa sembrare lui */
+.edo-mouth {
+  position: absolute;
+  left: 50%;
+  top: 57px;
+  width: 40px;
+  height: 15px;
+  margin-left: -20px;
+  background: var(--mouth);
+  border: 3px solid var(--visor);
+  overflow: hidden;
+}
+
+.edo-teeth {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 5px;
+  background: #ffffff;
+}
+
+.edo.think .edo-eye {
+  height: 6px;
+  top: 31px;
+}
+
+.edo.unsure .edo-eye {
+  height: 12px;
+  width: 20px;
+}
+
+.edo.happy .edo-mouth {
+  height: 18px;
+  top: 55px;
+}
