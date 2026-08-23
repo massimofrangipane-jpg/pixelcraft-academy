@@ -1149,3 +1149,47 @@ img {
   border-color: var(--edo);
   box-shadow: inset 0 0 0 2px var(--edo);
 }
+
+/* ---- Scelta libera delle due categorie ---- */
+
+.name-label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.name-input {
+  width: 100%;
+  padding: 14px 12px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--visor);
+  background: var(--paper);
+  border: 4px solid var(--visor);
+  border-radius: 10px;
+  box-shadow: 5px 5px 0 rgba(6, 10, 34, 0.55);
+}
+
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.chip {
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 3px solid var(--visor);
+  border-radius: 999px;
+  min-height: 40px;
+}

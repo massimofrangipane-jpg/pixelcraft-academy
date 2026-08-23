@@ -1,7 +1,7 @@
 /* PixelCraft Academy — precache same-origin.
    I path sono relativi a questo file, quindi funziona anche su
    un project site GitHub Pages (https://utente.github.io/repo/). */
-const VERSION = "pixelcraft-gh-v7";
+const VERSION = "pixelcraft-gh-v8";
 
 /* Senza questi l'app non parte offline. */
 const CORE = [
@@ -15,7 +15,6 @@ const CORE = [
   "./js/strings.js",
   "./js/knn.js",
   "./js/image.js",
-  "./js/samples.js",
   "./js/speech.js",
   "./js/store.js",
   "./js/brain.js",

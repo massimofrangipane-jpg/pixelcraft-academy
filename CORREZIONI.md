@@ -186,6 +186,27 @@ Serve a far scoprire che l'inquadratura fa parte del dato: la stessa foto,
 ritagliata sul soggetto, puo' dare una risposta diversa. E' il modo piu'
 diretto per capire perche' EDO si distrae con lo sfondo.
 
+## 14. Categorie libere (v8)
+
+Gatto/casa aveva un tasso di errore vicino a zero: 7 previsioni azzeccate su
+8 significa che il bambino non ha piu' niente da scoprire.
+
+La correzione non e' imporre una coppia piu' difficile, ma togliere le coppie
+fisse: i due nomi li scrive lui. Il classificatore era gia' indipendente
+dalle etichette, quindi serviva solo la schermata.
+
+- schermata iniziale con due campi liberi e alcune coppie pronte
+- cambiare i nomi azzera gli esempi: mescolare due missioni produrrebbe un
+  modello incoerente
+- migrazione automatica dai dati esistenti: `cat` -> `a`, `house` -> `b`,
+  con i nomi storici "gatto" e "casa" gia' compilati
+- rimossi i disegni finti (`samples.js`): sapevano disegnare solo gatti e
+  case, con categorie libere non avevano piu' senso
+
+Cosi' la difficolta' diventa una cosa che il bambino **scopre**: prova
+gatto/cane, vede EDO annaspare, e capisce da solo che esistono coppie facili
+e coppie impossibili.
+
 ## Da sapere prima del test
 
 L'atto 2 — EDO che sbaglia con pochi esempi — **non è più garantito**, ed è

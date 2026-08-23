@@ -71,11 +71,42 @@
           </div>
         </div>
         <div class="pad" style="margin-top: 24px">
-          <h1 class="title">Insegna a EDO a riconoscere i miei disegni</h1>
+          <h1 class="title" id="mission-title">Insegna a EDO a riconoscere</h1>
           <p class="muted" style="margin-top: 8px">Mostra un disegno. EDO prova a dire che cos'è.</p>
         </div>
         <div class="actions">
           <button id="btn-start" class="btn-voxel btn-wide">Inizia</button>
+        </div>
+      </section>
+
+      <section id="screen-setup" class="screen hidden">
+        <div class="speech stack">
+          <div class="edo-wrap" data-edo-slot="setup"></div>
+          <div class="speech-bubble">
+            <p class="speech-text" data-line>Che cosa vuoi insegnarmi?</p>
+            <button class="btn-voxel btn-paper btn-icon btn-speak" data-speak aria-label="Ascolta EDO"></button>
+          </div>
+        </div>
+        <div class="pad">
+          <label class="name-label" for="name-a">La prima cosa</label>
+          <input id="name-a" class="name-input" type="text" maxlength="14" autocomplete="off" placeholder="gatto" />
+          <label class="name-label" for="name-b">La seconda cosa</label>
+          <input id="name-b" class="name-input" type="text" maxlength="14" autocomplete="off" placeholder="cane" />
+          <p class="muted" style="margin-top: 14px">Oppure prova una di queste:</p>
+          <div class="preset-row" id="preset-row">
+            <button class="chip" data-preset="gatto|cane">gatto / cane</button>
+            <button class="chip" data-preset="giallo|rosso">giallo / rosso</button>
+            <button class="chip" data-preset="porta|finestra">porta / finestra</button>
+            <button class="chip" data-preset="cucchiaio|forchetta">cucchiaio / forchetta</button>
+            <button class="chip" data-preset="scarpa|calzino">scarpa / calzino</button>
+          </div>
+          <p class="muted" style="margin-top: 14px">
+            Piu' le due cose si somigliano, piu' e' difficile per EDO. Prova a trovarne
+            due che non riesce proprio a distinguere.
+          </p>
+        </div>
+        <div class="actions">
+          <button id="btn-names-go" class="btn-voxel btn-wide">Comincia</button>
         </div>
       </section>
 
@@ -89,8 +120,8 @@
         </div>
         <p class="hint pad">Tocca GATTO o CASA, poi aggiungi un disegno.</p>
         <div class="grid-2 pad">
-          <div id="card-cat" class="panel ring">
-            <button type="button" class="card-head" data-select="cat">
+          <div id="card-a" class="panel ring">
+            <button type="button" class="card-head" data-select="a">
               <svg class="icon-lg cat-fill" viewBox="0 0 48 48" aria-hidden="true">
                 <rect x="8" y="16" width="32" height="24" fill="currentColor" />
                 <path d="M8 16 16 4 22 16" fill="currentColor" />
@@ -100,13 +131,13 @@
               </svg>
               <span>
                 <strong>GATTO</strong>
-                <span class="count" id="count-cat">0 di 3</span>
+                <span class="count" id="count-a">0 di 3</span>
               </span>
             </button>
-            <div class="thumbs" id="thumbs-cat"></div>
+            <div class="thumbs" id="thumbs-a"></div>
           </div>
-          <div id="card-house" class="panel">
-            <button type="button" class="card-head" data-select="house">
+          <div id="card-b" class="panel">
+            <button type="button" class="card-head" data-select="b">
               <svg class="icon-lg house-fill" viewBox="0 0 48 48" aria-hidden="true">
                 <path d="M6 22 24 6 42 22v4H6z" fill="currentColor" />
                 <rect x="10" y="24" width="28" height="18" fill="currentColor" />
@@ -114,10 +145,10 @@
               </svg>
               <span>
                 <strong>CASA</strong>
-                <span class="count" id="count-house">0 di 3</span>
+                <span class="count" id="count-b">0 di 3</span>
               </span>
             </button>
-            <div class="thumbs" id="thumbs-house"></div>
+            <div class="thumbs" id="thumbs-b"></div>
           </div>
         </div>
         <div class="pad">
@@ -142,9 +173,9 @@
           <div class="grid-3">
             <button id="btn-photo" class="btn-voxel btn-paper">Fotografa</button>
             <button id="btn-draw" class="btn-voxel btn-paper">Disegna</button>
-            <button id="btn-sample" class="btn-voxel btn-ghost">Disegno di prova</button>
           </div>
           <button id="btn-train" class="btn-voxel btn-wide" disabled>Addestra</button>
+          <button id="btn-change-labels" class="btn-voxel btn-ghost btn-wide">Cambia le due cose</button>
           <button id="btn-goto-test" class="btn-voxel btn-ghost btn-wide hidden">Prova EDO</button>
         </div>
       </section>
@@ -170,8 +201,8 @@
         <div id="phase-bet" class="hidden pad">
           <p class="ask" id="ask-line">Secondo te EDO cosa dice?</p>
           <div class="grid-3">
-            <button class="btn-voxel btn-paper" data-bet="cat">GATTO</button>
-            <button class="btn-voxel btn-paper" data-bet="house">CASA</button>
+            <button class="btn-voxel btn-paper" data-bet="a">GATTO</button>
+            <button class="btn-voxel btn-paper" data-bet="b">CASA</button>
             <button class="btn-voxel btn-paper" data-bet="other">NESSUNO</button>
           </div>
         </div>

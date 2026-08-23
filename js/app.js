@@ -2,7 +2,6 @@ import { strings, DEFAULT_LOCALE } from "./strings.js";
 import { predictKnn, countByLabel, neighbourScale, scoreFor } from "./knn.js";
 import { occlusionMap, drawSpotlight, hottestCell, hasSignal } from "./explain.js";
 import { canvasToSquare, cropToSquare, fileToSquare, toThumb, videoToSquare } from "./image.js";
-import { drawSample } from "./samples.js";
 import { speak, primeVoice } from "./speech.js";
 import { emptyPersist, loadPersist, savePersist } from "./store.js";
 import { initBrain, embedCanvas } from "./brain.js";
@@ -12,11 +11,26 @@ const s = strings[DEFAULT_LOCALE];
    il modello e' costretto a scegliere fra gatto e casa anche davanti a un
    tavolo, ed e' esattamente il difetto che l'app dovrebbe insegnare a vedere.
    Non concorre alle soglie di addestramento: e' facoltativa. */
-const MISSION_LABELS = ["cat", "house", "other"];
-const TRAIN_LABELS = ["cat", "house"];
+const MISSION_LABELS = ["a", "b", "other"];
+const TRAIN_LABELS = ["a", "b"];
 
+/* I nomi delle categorie li sceglie il bambino: il classificatore e' gia'
+   indipendente dalle etichette, qui serve solo leggerli. */
 function labelName(l) {
-  return s.labels[l] ?? l;
+  if (l === "other") return s.labels.other;
+  return (state.persist?.labelNames?.[l] || "").toUpperCase() || (l === "a" ? "A" : "B");
+}
+
+function paintLabelNames() {
+  MISSION_LABELS.forEach((l) => {
+    const head = document.querySelector(`[data-select="${l}"] strong`);
+    if (head) head.textContent = labelName(l);
+  });
+  document.querySelectorAll("[data-bet]").forEach((b) => {
+    b.textContent = b.dataset.bet === "other" ? s.ui.neither : labelName(b.dataset.bet);
+  });
+  const t = $("mission-title");
+  if (t) t.textContent = `${labelName("a")} o ${labelName("b")}?`;
 }
 const MIN_EACH = 3;
 const GOAL_EACH = 10;
@@ -70,7 +84,7 @@ const state = {
   persist: emptyPersist(),
   screen: "boot",
   overlay: null,
-  activeLabel: "cat",
+  activeLabel: "a",
   mood: "idle",
   line: s.edo.welcome,
   prediction: null,
@@ -103,7 +117,7 @@ function say(text, mood = "talk") {
 
 function showScreen(name) {
   state.screen = name;
-  ["boot", "welcome", "collect", "test", "lesson", "complete"].forEach((id) => {
+  ["boot", "welcome", "setup", "collect", "test", "lesson", "complete"].forEach((id) => {
     $("screen-" + id).classList.toggle("hidden", id !== name);
   });
   const back = name !== "welcome" && name !== "boot";
@@ -133,24 +147,29 @@ function paintStars() {
   });
 }
 
+function enterCollect() {
+  showScreen("collect");
+  paintLabelNames();
+  paintCollect();
+}
+
 function paintCollect() {
   const c = countByLabel(state.persist.examples, MISSION_LABELS);
   const goal = state.persist.trainCount > 0 ? GOAL_EACH : MIN_EACH;
-  $("count-cat").textContent = `${c.cat} ${s.ui.countOf} ${goal}`;
-  $("count-house").textContent = `${c.house} ${s.ui.countOf} ${goal}`;
+  $("count-a").textContent = `${c.a} ${s.ui.countOf} ${goal}`;
+  $("count-b").textContent = `${c.b} ${s.ui.countOf} ${goal}`;
   $("count-other").textContent = String(c.other);
   MISSION_LABELS.forEach((l) =>
     $("card-" + l).classList.toggle("ring", state.activeLabel === l),
   );
   MISSION_LABELS.forEach((l) => renderThumbs(l, $("thumbs-" + l)));
-  const can = c.cat >= MIN_EACH && c.house >= MIN_EACH;
+  const can = c.a >= MIN_EACH && c.b >= MIN_EACH;
   $("btn-train").disabled = !can;
   $("btn-train").textContent = state.persist.trainCount > 0 ? s.ui.retrain : s.ui.train;
   $("btn-goto-test").classList.toggle("hidden", state.persist.trainCount === 0);
-  $("btn-sample").disabled = state.activeLabel === "other";
   let hint = "";
   if (!can) hint = s.ui.needThree;
-  else if (state.persist.trainCount > 0 && (c.cat < GOAL_EACH || c.house < GOAL_EACH))
+  else if (state.persist.trainCount > 0 && (c.a < GOAL_EACH || c.b < GOAL_EACH))
     hint = s.ui.goalTen;
   $("collect-hint").textContent = hint;
 }
@@ -159,7 +178,7 @@ function renderThumbs(label, root) {
   const items = state.persist.examples.filter((e) => e.label === label).slice(-6);
   if (items.length === 0) {
     root.innerHTML = `<p class="muted" style="grid-column:1/-1;align-self:center;text-align:center;font-size:12px">${
-      label === "cat" ? s.ui.emptyCat : s.ui.emptyHouse
+      s.ui.emptySlot
     }</p>`;
     return;
   }
@@ -452,8 +471,7 @@ async function addCanvas(canvas, label) {
   persistNow();
   hideOverlays();
   const nextN = n + 1;
-  if (label === "cat" && nextN < MIN_EACH) say(s.edo.needCat, "idle");
-  else if (label === "house" && nextN < MIN_EACH) say(s.edo.needHouse, "idle");
+  if (label !== "other" && nextN < MIN_EACH) say(`${s.edo.needMore} ${labelName(label)}.`, "idle");
   else if (nextN < GOAL_EACH && state.persist.trainCount > 0) say(s.edo.addMore, "idle");
   else say(s.edo.thanks, "happy");
   paintCollect();
@@ -481,7 +499,7 @@ async function runTrain() {
   p.stars.one = true;
   const nextCount = p.trainCount + 1;
   if (nextCount >= 2 && p.examples.length > p.examplesAtLastTrain) p.stars.two = true;
-  const reachedTen = Math.min(c.cat, c.house) >= GOAL_EACH;
+  const reachedTen = Math.min(c.a, c.b) >= GOAL_EACH;
   if (reachedTen) {
     p.lessonUnlocked = true;
     p.seenAct3 = true;
@@ -618,10 +636,58 @@ function bind() {
     b.onclick = () => speak(state.line);
   });
   document.addEventListener("pointerdown", primeVoice, { once: true });
+  $("preset-row").onclick = (e) => {
+    const chip = e.target.closest("[data-preset]");
+    if (!chip) return;
+    const [a, b] = chip.dataset.preset.split("|");
+    $("name-a").value = a;
+    $("name-b").value = b;
+  };
+  $("btn-names-go").onclick = () => {
+    const a = $("name-a").value.trim();
+    const b = $("name-b").value.trim();
+    if (!a || !b) return say(s.edo.namesShort, "unsure");
+    if (a.toLowerCase() === b.toLowerCase()) return say(s.edo.namesSame, "unsure");
+    const changed =
+      a.toLowerCase() !== (state.persist.labelNames.a || "").toLowerCase() ||
+      b.toLowerCase() !== (state.persist.labelNames.b || "").toLowerCase();
+    if (changed && state.persist.examples.length) {
+      /* Nomi nuovi = missione nuova: mescolare vecchi e nuovi esempi
+         produrrebbe un modello incoerente. */
+      state.persist.examples = [];
+      state.persist.stars = { one: false, two: false, three: false };
+      state.persist.trainCount = 0;
+      state.persist.examplesAtLastTrain = 0;
+      state.persist.lessonUnlocked = false;
+      state.persist.seenAct2 = false;
+      state.persist.seenAct3 = false;
+    }
+    state.persist.labelNames = { a, b };
+    refreshScale();
+    persistNow();
+    paintLabelNames();
+    state.activeLabel = "a";
+    enterCollect();
+    say(s.edo.namesSet, "happy");
+  };
   $("btn-start").onclick = () => {
-    showScreen("collect");
-    say(s.edo.intro, "idle");
-    paintCollect();
+    const n = state.persist.labelNames;
+    if (!n.a || !n.b) {
+      $("name-a").value = n.a || "";
+      $("name-b").value = n.b || "";
+      showScreen("setup");
+      say(s.edo.askNames, "think");
+    } else {
+      enterCollect();
+      say(s.edo.intro, "idle");
+    }
+  };
+  $("btn-change-labels").onclick = () => {
+    const n = state.persist.labelNames;
+    $("name-a").value = n.a || "";
+    $("name-b").value = n.b || "";
+    showScreen("setup");
+    say(s.edo.askNames, "think");
   };
   document.querySelectorAll("[data-select]").forEach((b) => {
     b.onclick = () => {
@@ -629,7 +695,7 @@ function bind() {
       paintCollect();
     };
   });
-  $("thumbs-cat").onclick = $("thumbs-house").onclick = $("thumbs-other").onclick = (e) => {
+  $("thumbs-a").onclick = $("thumbs-b").onclick = $("thumbs-other").onclick = (e) => {
     const id = e.target.dataset.del;
     if (!id) return;
     state.persist.examples = state.persist.examples.filter((ex) => ex.id !== id);
@@ -672,12 +738,6 @@ function bind() {
       state.drawInk = b.dataset.ink;
     };
   });
-  $("btn-sample").onclick = () => {
-    if (state.activeLabel === "other") return; // nessun disegno finto per ALTRO
-    const c = countByLabel(state.persist.examples, MISSION_LABELS);
-    const seed = c[state.activeLabel] + state.persist.examples.length + 1;
-    void addCanvas(drawSample(state.activeLabel, seed), state.activeLabel);
-  };
   $("btn-train").onclick = () => void runTrain();
   $("btn-goto-test").onclick = () => {
     showScreen("test");
@@ -750,6 +810,7 @@ async function boot() {
   bind();
   state.persist = loadPersist();
   refreshScale();
+  paintLabelNames();
   paintStars();
   $("btn-start").textContent = state.persist.trainCount > 0 ? s.ui.continue : s.ui.start;
   $("lesson-p1").textContent = s.lesson.p1;

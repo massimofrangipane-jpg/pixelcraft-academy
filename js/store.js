@@ -4,6 +4,7 @@ export function emptyPersist() {
   return {
     examples: [],
     stars: { one: false, two: false, three: false },
+    labelNames: { a: "", b: "" },
     trainCount: 0,
     betHits: 0,
     betTries: 0,
@@ -25,7 +26,16 @@ export function loadPersist() {
       ...base,
       ...parsed,
       stars: { ...base.stars, ...(parsed.stars || {}) },
-      examples: Array.isArray(parsed.examples) ? parsed.examples : [],
+      labelNames: (() => {
+        const n = { ...base.labelNames, ...(parsed.labelNames || {}) };
+        const legacy = (parsed.examples || []).some((e) => e.label === "cat" || e.label === "house");
+        if (legacy && !n.a && !n.b) return { a: "gatto", b: "casa" };
+        return n;
+      })(),
+      /* Migrazione dalle categorie fisse: i dati gia' raccolti non si perdono. */
+      examples: (Array.isArray(parsed.examples) ? parsed.examples : []).map((e) =>
+        e.label === "cat" ? { ...e, label: "a" } : e.label === "house" ? { ...e, label: "b" } : e,
+      ),
     };
   } catch {
     return emptyPersist();
