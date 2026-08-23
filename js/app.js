@@ -21,6 +21,14 @@ function labelName(l) {
   return (state.persist?.labelNames?.[l] || "").toUpperCase() || (l === "a" ? "A" : "B");
 }
 
+/* Ogni testo che nomina le categorie passa da qui: nessun "gatto" o "casa"
+   scritto nel codice. */
+function fill(tpl) {
+  return String(tpl)
+    .replaceAll("{a}", labelName("a"))
+    .replaceAll("{b}", labelName("b"));
+}
+
 function paintLabelNames() {
   MISSION_LABELS.forEach((l) => {
     const head = document.querySelector(`[data-select="${l}"] strong`);
@@ -31,6 +39,10 @@ function paintLabelNames() {
   });
   const t = $("mission-title");
   if (t) t.textContent = `${labelName("a")} o ${labelName("b")}?`;
+  const ph = $("pick-hint");
+  if (ph) ph.textContent = fill(s.ui.pickLabel);
+  const oh = $("other-hint");
+  if (oh) oh.textContent = fill(s.ui.otherHint);
 }
 const MIN_EACH = 3;
 const GOAL_EACH = 10;
@@ -171,7 +183,7 @@ function paintCollect() {
   if (!can) hint = s.ui.needThree;
   else if (state.persist.trainCount > 0 && (c.a < GOAL_EACH || c.b < GOAL_EACH))
     hint = s.ui.goalTen;
-  $("collect-hint").textContent = hint;
+  $("collect-hint").textContent = fill(hint);
 }
 
 function renderThumbs(label, root) {

@@ -1193,3 +1193,22 @@ img {
   border-radius: 999px;
   min-height: 40px;
 }
+
+/* ---- Indicatori di categoria: neutri, i nomi li sceglie il bambino ---- */
+
+.slot-chip {
+  display: inline-block;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 4px solid var(--visor);
+  box-shadow: inset -6px -6px 0 rgba(6, 10, 34, 0.28);
+}
+
+.slot-chip.slot-a {
+  background: var(--edo);
+}
+
+.slot-chip.slot-b {
+  background: var(--star);
+}

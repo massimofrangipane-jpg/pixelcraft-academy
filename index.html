@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta
       name="description"
-      content="Insegna a EDO a riconoscere i tuoi disegni. Tutto sul telefono."
+      content="Insegna a EDO a riconoscere due cose. Tutto sul telefono."
     />
     <title>PixelCraft Academy</title>
     <base href="./" />
@@ -66,13 +66,13 @@
         <div class="speech stack">
           <div class="edo-wrap" data-edo-slot="welcome"></div>
           <div class="speech-bubble">
-            <p class="speech-text" data-line>Ciao! Sono EDO. Insegnami i disegni.</p>
+            <p class="speech-text" data-line>Ciao! Sono EDO. Insegnami due cose.</p>
             <button class="btn-voxel btn-paper btn-icon btn-speak" data-speak aria-label="Ascolta EDO"></button>
           </div>
         </div>
         <div class="pad" style="margin-top: 24px">
           <h1 class="title" id="mission-title">Insegna a EDO a riconoscere</h1>
-          <p class="muted" style="margin-top: 8px">Mostra un disegno. EDO prova a dire che cos'è.</p>
+          <p class="muted" style="margin-top: 8px">Inquadra qualcosa. EDO prova a dire che cos'è.</p>
         </div>
         <div class="actions">
           <button id="btn-start" class="btn-voxel btn-wide">Inizia</button>
@@ -118,19 +118,13 @@
             <button class="btn-voxel btn-paper btn-icon btn-speak" data-speak aria-label="Ascolta EDO"></button>
           </div>
         </div>
-        <p class="hint pad">Tocca GATTO o CASA, poi aggiungi un disegno.</p>
+        <p class="hint pad" id="pick-hint"></p>
         <div class="grid-2 pad">
           <div id="card-a" class="panel ring">
             <button type="button" class="card-head" data-select="a">
-              <svg class="icon-lg cat-fill" viewBox="0 0 48 48" aria-hidden="true">
-                <rect x="8" y="16" width="32" height="24" fill="currentColor" />
-                <path d="M8 16 16 4 22 16" fill="currentColor" />
-                <path d="M26 16 32 4 40 16" fill="currentColor" />
-                <rect x="16" y="24" width="5" height="5" fill="#0d1c1e" />
-                <rect x="27" y="24" width="5" height="5" fill="#0d1c1e" />
-              </svg>
+              <span class="slot-chip slot-a"></span>
               <span>
-                <strong>GATTO</strong>
+                <strong>&nbsp;</strong>
                 <span class="count" id="count-a">0 di 3</span>
               </span>
             </button>
@@ -138,13 +132,9 @@
           </div>
           <div id="card-b" class="panel">
             <button type="button" class="card-head" data-select="b">
-              <svg class="icon-lg house-fill" viewBox="0 0 48 48" aria-hidden="true">
-                <path d="M6 22 24 6 42 22v4H6z" fill="currentColor" />
-                <rect x="10" y="24" width="28" height="18" fill="currentColor" />
-                <rect x="20" y="30" width="8" height="12" fill="#0d1c1e" />
-              </svg>
+              <span class="slot-chip slot-b"></span>
               <span>
-                <strong>CASA</strong>
+                <strong>&nbsp;</strong>
                 <span class="count" id="count-b">0 di 3</span>
               </span>
             </button>
@@ -164,7 +154,7 @@
                 <span class="count" id="count-other">0</span>
               </span>
             </button>
-            <p class="meter-help">Cose che non sono ne' gatti ne' case.</p>
+            <p class="meter-help" id="other-hint"></p>
             <div class="thumbs" id="thumbs-other"></div>
           </div>
         </div>
@@ -192,7 +182,7 @@
         <div class="viewfinder">
           <video id="live-video" class="hidden" playsinline muted autoplay></video>
           <canvas id="frozen-canvas" class="hidden shot"></canvas>
-          <p id="cam-fallback" class="cam-fallback">Inquadra un disegno, poi blocca.</p>
+          <p id="cam-fallback" class="cam-fallback">Inquadra qualcosa, poi blocca.</p>
           <div id="focus-grid" class="focus-grid hidden"></div>
           <div id="where-bar" class="where-bar hidden"><div id="where-fill"></div></div>
         </div>
@@ -201,8 +191,8 @@
         <div id="phase-bet" class="hidden pad">
           <p class="ask" id="ask-line">Secondo te EDO cosa dice?</p>
           <div class="grid-3">
-            <button class="btn-voxel btn-paper" data-bet="a">GATTO</button>
-            <button class="btn-voxel btn-paper" data-bet="b">CASA</button>
+            <button class="btn-voxel btn-paper" data-bet="a">&nbsp;</button>
+            <button class="btn-voxel btn-paper" data-bet="b">&nbsp;</button>
             <button class="btn-voxel btn-paper" data-bet="other">NESSUNO</button>
           </div>
         </div>
@@ -239,7 +229,7 @@
           <button id="btn-again" class="btn-voxel btn-wide hidden">Prova un altro</button>
           <div class="grid-2" id="secondary-row">
             <button id="btn-shutter" class="btn-voxel btn-paper">Scatta</button>
-            <button id="btn-add-more" class="btn-voxel btn-ghost">Aggiungi disegni</button>
+            <button id="btn-add-more" class="btn-voxel btn-ghost">Aggiungi esempi</button>
           </div>
           <button id="btn-lesson" class="btn-voxel btn-star btn-wide hidden">Perche' i dati sono importanti</button>
         </div>
@@ -270,7 +260,7 @@
         </div>
         <div class="pad" style="text-align: center; margin-top: 16px">
           <h1 class="title">Missione 1 completata</h1>
-          <p class="muted" style="margin-top: 8px">Hai insegnato tu a EDO. Senza i tuoi disegni non sapeva niente.</p>
+          <p class="muted" style="margin-top: 8px">Hai insegnato tu a EDO. Senza i tuoi esempi non sapeva niente.</p>
         </div>
       </section>
     </div>
@@ -281,7 +271,7 @@
         <div class="edo-wrap" data-edo-slot="perm" style="margin: 12px auto 0"></div>
         <p class="title" style="text-align: center; margin-top: 12px">Mi serve la fotocamera per vedere.</p>
         <p class="muted" style="text-align: center; margin-top: 8px">
-          EDO ha bisogno della fotocamera per vedere i tuoi disegni. Le foto restano sul telefono.
+          EDO ha bisogno della fotocamera per vedere. Le foto restano sul telefono.
         </p>
         <button id="btn-perm-ok" class="btn-voxel btn-wide" style="margin-top: 20px">Va bene</button>
       </div>
@@ -291,7 +281,7 @@
       <div class="safe-shell" style="height: 100%">
         <div class="header">
           <button id="btn-cam-close" class="btn-voxel btn-paper btn-icon" aria-label="Indietro"></button>
-          <p class="profile" id="cam-label">GATTO</p>
+          <p class="profile" id="cam-label"></p>
         </div>
         <video id="cam-video" style="flex: 1; width: 100%; background: #000; object-fit: cover" playsinline muted autoplay></video>
         <p id="cam-fail" class="hint hidden">Niente fotocamera. Scatta o disegna.</p>
@@ -324,7 +314,7 @@
     <div id="overlay-train" class="modal hidden">
       <div class="modal-card" style="text-align: center">
         <div class="edo-wrap" data-edo-slot="train" style="margin: 0 auto"></div>
-        <p class="title" style="margin-top: 16px">Studio i tuoi disegni.</p>
+        <p class="title" style="margin-top: 16px">Studio i tuoi esempi.</p>
       </div>
     </div>
 
