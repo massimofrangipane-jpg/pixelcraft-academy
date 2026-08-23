@@ -72,10 +72,18 @@ export function kFor(n) {
    Serve all'occlusione: misura quanto quel pezzo di immagine sosteneva
    la risposta gia' data. */
 export function scoreFor(examples, vector, label) {
-  const p = predictKnn(examples, vector);
-  if (!p) return 0;
-  const total = Object.values(p.weights).reduce((a, b) => a + b, 0) || 1;
-  return (p.weights[label] || 0) / total;
+  /* La quota di voto e' quantizzata (con k=3 vale 0, 1/3, 2/3 o 1) e con i
+     vicini concordi resta incollata a 1: coprendo un pezzo non cambia nulla
+     e la mappa esce piatta. Serve un segnale continuo: la somiglianza col
+     disegno piu' vicino di quella categoria. */
+  const same = examples.filter((e) => e.label === label);
+  if (!same.length) return 0;
+  let best = Infinity;
+  for (const e of same) {
+    const d = cosineDistance(e.vector, vector);
+    if (d < best) best = d;
+  }
+  return 1 - best;
 }
 
 export function predictKnn(examples, vector, scale = null) {

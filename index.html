@@ -162,6 +162,7 @@
           <video id="live-video" class="hidden" playsinline muted autoplay></video>
           <canvas id="frozen-canvas" class="hidden shot"></canvas>
           <p id="cam-fallback" class="cam-fallback">Inquadra un disegno, poi blocca.</p>
+          <div id="focus-grid" class="focus-grid hidden"></div>
           <div id="where-bar" class="where-bar hidden"><div id="where-fill"></div></div>
         </div>
 
@@ -182,7 +183,14 @@
           <p id="vote-line" class="votes"></p>
           <div id="neighbours" class="neigh"></div>
           <p class="meter-help" id="neigh-help">Tocca una foto per buttarla via. EDO ricalcola subito.</p>
-          <button id="btn-where" class="btn-voxel btn-star btn-wide">Dove ho guardato?</button>
+          <div class="grid-2">
+            <button id="btn-where" class="btn-voxel btn-star">Dove ho guardato?</button>
+            <button id="btn-focus" class="btn-voxel btn-paper">Guarda qui!</button>
+          </div>
+          <div id="focus-row" class="hidden grid-2" style="margin-top: 8px">
+            <button id="btn-focus-go" class="btn-voxel">Guarda solo qui</button>
+            <button id="btn-focus-cancel" class="btn-voxel btn-ghost">Annulla</button>
+          </div>
           <div class="grid-2" style="margin-top: 8px">
             <button id="btn-right" class="btn-voxel">Ha indovinato</button>
             <button id="btn-wrong" class="btn-voxel btn-ghost">Ha sbagliato</button>

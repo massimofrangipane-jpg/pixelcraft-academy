@@ -42,7 +42,9 @@ export function drawSpotlight(target, source, cells, grid = GRID) {
   ctx.drawImage(source, 0, 0, target.width, target.height);
 
   const drops = cells.map((c) => Math.max(0, c.drop));
-  const max = Math.max(...drops, 1e-6);
+  const max = Math.max(...drops);
+  if (!(max > 1e-4)) return; // nulla da illuminare: lascio l'immagine com'e'
+
   const cw = target.width / grid;
   const ch = target.height / grid;
 
@@ -54,6 +56,14 @@ export function drawSpotlight(target, source, cells, grid = GRID) {
 }
 
 /* Il quadretto piu' decisivo, per dire a voce dove si trova. */
+/* Se nessun quadretto sposta il risultato piu' del rumore, la mappa non
+   sta misurando niente: meglio dirlo che indicare un punto a caso. */
+export function hasSignal(cells) {
+  const max = Math.max(...cells.map((c) => c.drop));
+  const mean = cells.reduce((a, c) => a + Math.abs(c.drop), 0) / cells.length;
+  return max > 0.01 && max > mean * 1.6;
+}
+
 export function hottestCell(cells, grid = GRID) {
   const best = cells.reduce((a, b) => (b.drop > a.drop ? b : a), cells[0]);
   const col = best.gx < grid / 3 ? "sinistra" : best.gx > (2 * grid) / 3 ? "destra" : "centro";

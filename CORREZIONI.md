@@ -159,6 +159,33 @@ presenti, poi le italiane note), lettura piu' lenta, tono leggermente alto,
 micro-pause sulle virgole, e sblocco al primo tocco perche' su iOS la sintesi
 resta muta finche' non nasce da un gesto.
 
+## 12. Bug: "Dove ho guardato" non misurava niente (v7)
+
+Il punteggio usato dall'occlusione era la quota di voto KNN. Con k=3 vale
+0, 1/3, 2/3 o 1: quantizzata. Con tre vicini concordi resta incollata a 1,0
+e coprire un quadretto non la sposta. Risultato: tutti i cali a zero,
+immagine scurita in modo uniforme, e `hottestCell` che sceglieva il primo
+quadretto a pari merito — la frase "guardavo in alto a sinistra" era rumore
+presentato come misura.
+
+Sostituito con un segnale **continuo**: la somiglianza col disegno piu'
+vicino della categoria scelta. Verificato: al degradare dell'immagine la
+quota di voto resta 1,0000 su tutta la scala, mentre il nuovo punteggio
+scende da 0,869 a 0,683.
+
+Aggiunto anche `hasSignal()`: se nessun quadretto sposta il risultato piu'
+del rumore di fondo, EDO lo dice invece di indicare un punto a caso.
+
+## 13. "Guarda qui!" — il bambino indica a EDO dove guardare
+
+L'inverso dell'occlusione. Sul fotogramma bloccato compare una griglia 5x5:
+il bambino tocca i quadretti dove sta la cosa da riconoscere, l'app ritaglia
+quell'area e richiede la risposta.
+
+Serve a far scoprire che l'inquadratura fa parte del dato: la stessa foto,
+ritagliata sul soggetto, puo' dare una risposta diversa. E' il modo piu'
+diretto per capire perche' EDO si distrae con lo sfondo.
+
 ## Da sapere prima del test
 
 L'atto 2 — EDO che sbaglia con pochi esempi — **non è più garantito**, ed è

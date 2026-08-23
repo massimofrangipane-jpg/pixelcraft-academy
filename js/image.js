@@ -21,6 +21,22 @@ export function rasterizeSquare(source, sw, sh, size = SIZE) {
   return out;
 }
 
+/* Ritaglia l'area scelta dal bambino e la riporta a 224x224.
+   E' il gesto che insegna che l'inquadratura fa parte del dato. */
+export function cropToSquare(source, x, y, w, h, size = 224) {
+  const out = makeCanvas(size, size);
+  const ctx = out.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, size, size);
+  const side = Math.max(w, h);
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const sx = Math.max(0, Math.min(source.width - side, cx - side / 2));
+  const sy = Math.max(0, Math.min(source.height - side, cy - side / 2));
+  ctx.drawImage(source, sx, sy, Math.min(side, source.width), Math.min(side, source.height), 0, 0, size, size);
+  return out;
+}
+
 export function toJpeg(canvas, quality = 0.82) {
   return canvas.toDataURL("image/jpeg", quality);
 }

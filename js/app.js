@@ -1,7 +1,7 @@
 import { strings, DEFAULT_LOCALE } from "./strings.js";
 import { predictKnn, countByLabel, neighbourScale, scoreFor } from "./knn.js";
-import { occlusionMap, drawSpotlight, hottestCell } from "./explain.js";
-import { canvasToSquare, fileToSquare, toThumb, videoToSquare } from "./image.js";
+import { occlusionMap, drawSpotlight, hottestCell, hasSignal } from "./explain.js";
+import { canvasToSquare, cropToSquare, fileToSquare, toThumb, videoToSquare } from "./image.js";
 import { drawSample } from "./samples.js";
 import { speak, primeVoice } from "./speech.js";
 import { emptyPersist, loadPersist, savePersist } from "./store.js";
@@ -77,6 +77,7 @@ const state = {
   alts: [],
   phase: "aim",
   frozen: null,
+  focus: new Set(),
   childBet: null,
   scale: null,
   liveTimer: null,
@@ -185,6 +186,7 @@ function setPhase(phase) {
   $("live-video").classList.toggle("hidden", phase !== "aim" || !state.liveStream);
   $("fix-row").classList.add("hidden");
   $("where-bar").classList.add("hidden");
+  closeFocus();
   $("btn-lesson").classList.toggle("hidden", !state.persist.lessonUnlocked);
   // meno pulsanti a schermo nelle fasi in cui non servono: tutto deve stare
   // in una schermata sola, senza scorrere
@@ -291,6 +293,79 @@ async function dropExample(id) {
   say(before !== after ? s.edo.changedMind : s.edo.sameMind, "think");
 }
 
+/* ---- "Guarda qui": e' il bambino a dire a EDO dove guardare ----
+   L'inverso dell'occlusione. Sceglie i quadretti, l'app ritaglia solo
+   quell'area e richiede la risposta: si scopre che l'inquadratura fa parte
+   del dato, non e' una cornice neutra. */
+
+const FOCUS_GRID = 5;
+
+function buildFocusGrid() {
+  const root = $("focus-grid");
+  if (root.childElementCount) return;
+  for (let i = 0; i < FOCUS_GRID * FOCUS_GRID; i++) {
+    const cell = document.createElement("i");
+    cell.dataset.cell = String(i);
+    root.appendChild(cell);
+  }
+  root.onclick = (e) => {
+    const cell = e.target.closest("[data-cell]");
+    if (!cell) return;
+    const k = cell.dataset.cell;
+    if (state.focus.has(k)) state.focus.delete(k);
+    else state.focus.add(k);
+    cell.classList.toggle("on", state.focus.has(k));
+  };
+}
+
+function openFocus() {
+  if (!state.frozen) return;
+  buildFocusGrid();
+  state.focus.clear();
+  $("focus-grid").querySelectorAll("i").forEach((c) => c.classList.remove("on"));
+  $("focus-grid").classList.remove("hidden");
+  $("focus-row").classList.remove("hidden");
+  say(s.edo.focusAsk, "think");
+}
+
+function closeFocus() {
+  $("focus-grid")?.classList.add("hidden");
+  $("focus-row")?.classList.add("hidden");
+  state.focus.clear();
+}
+
+async function focusHere() {
+  if (!state.frozen) return;
+  if (!state.focus.size) {
+    say(s.edo.focusNone, "unsure");
+    return;
+  }
+  const idx = [...state.focus].map(Number);
+  const cols = idx.map((i) => i % FOCUS_GRID);
+  const rows = idx.map((i) => Math.floor(i / FOCUS_GRID));
+  const cw = state.frozen.width / FOCUS_GRID;
+  const ch = state.frozen.height / FOCUS_GRID;
+  const x = Math.min(...cols) * cw;
+  const y = Math.min(...rows) * ch;
+  const w = (Math.max(...cols) + 1) * cw - x;
+  const h = (Math.max(...rows) + 1) * ch - y;
+
+  const cropped = cropToSquare(state.frozen, x, y, w, h);
+  closeFocus();
+  showFrozen(cropped);
+  say(s.edo.focusDone, "think");
+  try {
+    state.prediction = predictKnn(
+      state.persist.examples,
+      await embedCanvas(cropped),
+      state.scale,
+    );
+    paintReveal();
+  } catch {
+    say(s.edo.noWhere, "unsure");
+  }
+}
+
 /* Occlusione: 25 passaggi del modello, tutto in locale. */
 async function whereLooked() {
   const p = state.prediction;
@@ -308,9 +383,13 @@ async function whereLooked() {
         $("where-fill").style.width = Math.round(t * 100) + "%";
       },
     );
-    drawSpotlight($("frozen-canvas"), state.frozen, cells);
-    const hot = hottestCell(cells);
-    say(`${s.edo.lookedAt} ${hot.row}, a ${hot.col}.`, "happy");
+    if (!hasSignal(cells)) {
+      say(s.edo.noSpot, "unsure");
+    } else {
+      drawSpotlight($("frozen-canvas"), state.frozen, cells);
+      const hot = hottestCell(cells);
+      say(`${s.edo.lookedAt} ${hot.row}, a ${hot.col}.`, "happy");
+    }
   } catch {
     say(s.edo.noWhere, "unsure");
   } finally {
@@ -626,6 +705,12 @@ function bind() {
     if (cell) void dropExample(cell.dataset.drop);
   };
   $("btn-where").onclick = () => void whereLooked();
+  $("btn-focus").onclick = () => openFocus();
+  $("btn-focus-go").onclick = () => void focusHere();
+  $("btn-focus-cancel").onclick = () => {
+    closeFocus();
+    say(s.edo.thanks, "idle");
+  };
   $("btn-right").onclick = () => judge(true);
   $("btn-wrong").onclick = () => judge(false);
   $("btn-fix1").onclick = () => fixWith((state.alts || [])[0]);

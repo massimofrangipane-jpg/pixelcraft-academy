@@ -1123,3 +1123,29 @@ img {
   height: 18px;
   top: 55px;
 }
+
+/* ---- Griglia "guarda qui" sopra il fotogramma ---- */
+
+.viewfinder {
+  position: relative;
+}
+
+.focus-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  z-index: 4;
+}
+
+.focus-grid i {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+}
+
+.focus-grid i.on {
+  background: rgba(63, 214, 196, 0.38);
+  border-color: var(--edo);
+  box-shadow: inset 0 0 0 2px var(--edo);
+}
